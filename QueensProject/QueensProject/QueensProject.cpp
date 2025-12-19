@@ -2,14 +2,17 @@
 using namespace std;
 int const commandSize=20;
 int const maxSizeOfBoard = 15;
-int** createMatrix(int n, int m) {
-    int** matrix = new int* [n];
+char** createMatrix(int n, int m) {
+    char** matrix = new char* [n];
     for (int i = 0; i < n; i++) {
-        matrix[i] = new int[m] {0};
+        matrix[i] = new char[m];
+        for (int j = 0; j < m; j++) {
+            matrix[i][j] = '0';
+        }
     }
     return matrix;
 }
-void printMatrix(int n, int m, int** matrix) {
+void printMatrix(int n, int m, char** matrix) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             cout << matrix[i][j] << " ";
@@ -17,7 +20,7 @@ void printMatrix(int n, int m, int** matrix) {
         cout << endl;
     }
 }
-void deleteMatrix(int n, int** matrix) {
+void deleteMatrix(int n, char** matrix) {
     for (int i = 0; i < n; i++) {
         delete[] matrix[i];
     }
@@ -51,6 +54,9 @@ int main()
     cout << "Enter command: ";
     char command[commandSize];
     cin >> command;
+    int N = 0, M = 0;
+    char** matrix = nullptr;
+    char turn = '1';
     while (myStrcmp(command, "end") == false) {
         if (myStrcmp(command, "new")) {
             cout << "Enter size of the board: ";
@@ -62,35 +68,101 @@ int main()
             }
             else {
                 cout << "Board " << n << "x" << m << endl;
-                int** matrix = createMatrix(n, m);
+                matrix = createMatrix(n, m);
+                N = n;
+                M = m;
                 printMatrix(n, m, matrix);
+
             }
             cout << "Enter new command: ";
             cin >> command;
         }
-        if (myStrcmp(command, "play")) {
+        else if (myStrcmp(command, "play")) {
+            if (matrix == nullptr) {
+                cout << "No board. Use 'new' first." << endl;
+            }
+            else {
+
+
+                cout << "Enter place on board(row col): ";
+                int x, y;
+                cin >> x >> y;
+                if ((x < 0 || x >= N) || (y < 0 || y >= M)) {
+                    cout << "The coordinates must be in the interval [0," << N << "] and [0," << M << "]" << endl;
+                }
+                else {
+                    if (matrix[x][y] != '0') {
+                        cout << "This place is taken";
+                    }
+                    else {
+                        matrix[x][y] = turn;
+                        for (int i = 0;i < N;i++) {
+                            if (i != x) {
+                                matrix[i][y] = '*';
+                            }
+                        }
+                        for (int i = 0;i < M;i++) {
+                            if (i != y) {
+                                matrix[x][i] = '*';
+                            }
+                        }
+                        int i, j;
+
+                        i = x - 1; j = y - 1;
+                        while (i >= 0 && j >= 0) matrix[i--][j--] = '*';
+
+                        i = x + 1; j = y + 1;
+                        while (i < N && j < M) matrix[i++][j++] = '*';
+
+                        i = x - 1; j = y + 1;
+                        while (i >= 0 && j < M) matrix[i--][j++] = '*';
+
+                        i = x + 1; j = y - 1;
+                        while (i < N && j >= 0) matrix[i++][j--] = '*';
+
+                    }
+                    if (turn == '1') {
+                        turn = '2';
+                    }
+                    if (turn == '2') {
+                        turn = '1';
+                    }
+                }
+            }
+            cout << "Enter new command: ";
+            cin >> command;
+            
+            
+        }
+        else if (myStrcmp(command, "free")) {
 
         }
-        if (myStrcmp(command, "free")) {
+        else if (myStrcmp(command, "show")) {
+           printMatrix(N, M, matrix);
+           cout << "Enter new command: ";
+           cin >> command;
+        }
+        else if (myStrcmp(command, "save")) {
 
         }
-        if (myStrcmp(command, "show")) {
-           // printMatrix(n, m, matrix);
-        }
-        if (myStrcmp(command, "save")) {
+        else if (myStrcmp(command, "load")) {
 
         }
-        if (myStrcmp(command, "load")) {
+        else if (myStrcmp(command, "turn")) {
 
         }
-        if (myStrcmp(command, "turn")) {
-
-        }
-        if (myStrcmp(command, "help")) {
+        else if (myStrcmp(command, "help")) {
             printHelp();
+            cout << "Enter new command: ";
+            cin >> command;
         }
-        if (myStrcmp(command, "exit")) {
+        else if (myStrcmp(command, "exit")) {
             return 0;
+        }
+        else {
+            cout << "This command was not valid"<<endl;
+            cout << "Enter new command: ";
+            cin >> command;
         }
 
 
