@@ -58,35 +58,67 @@ void freePlaces(char** matrix, int n, int m) {
     }
     cout << endl;
 }
-void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,int* historyCounter) {
+void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,int* historyCounter,int*lastChecked,int *lastCounter) {
     if (matrix[x][y] != '0') {
         cout << "This place is taken"<<endl;
     }
     else {
+        *lastCounter = 0;
         matrix[x][y] = turn;
         for (int i = 0;i < N;i++) {
-            if (i != x) {
+            if (i != x && matrix[i][y] == '0') {
                 matrix[i][y] = '*';
+                lastChecked[(*lastCounter)++] = i;
+                lastChecked[(*lastCounter)++] = y;
             }
         }
         for (int i = 0;i < M;i++) {
-            if (i != y) {
+            if (i != y && matrix[x][i] == '0') {
                 matrix[x][i] = '*';
+                lastChecked[(*lastCounter)++] = x;
+                lastChecked[(*lastCounter)++] = i;
             }
         }
         int i, j;
-
         i = x - 1; j = y - 1;
-        while (i >= 0 && j >= 0) matrix[i--][j--] = '*';
+        while (i >= 0 && j >= 0) {
+            if (matrix[i][j] == '0') {
+                matrix[i][j] = '*';
+                lastChecked[(*lastCounter)++] = i;
+                lastChecked[(*lastCounter)++] = j;
+            }
+            i--; j--;
+        }
 
         i = x + 1; j = y + 1;
-        while (i < N && j < M) matrix[i++][j++] = '*';
+        while (i < N && j < M) {
+            if (matrix[i][j] == '0') {
+                matrix[i][j] = '*';
+                lastChecked[(*lastCounter)++] = i;
+                lastChecked[(*lastCounter)++] = j;
+            }
+            i++; j++;
+        }
 
         i = x - 1; j = y + 1;
-        while (i >= 0 && j < M) matrix[i--][j++] = '*';
-
+        while (i >= 0 && j < M) {
+            if (matrix[i][j] == '0') {
+                matrix[i][j] = '*';
+                lastChecked[(*lastCounter)++] = i;
+                lastChecked[(*lastCounter)++] = j;
+            }
+            i--; j++;
+        }
         i = x + 1; j = y - 1;
-        while (i < N && j >= 0) matrix[i++][j--] = '*';
+        i = x + 1; j = y - 1;
+        while (i < N && j >= 0) {
+            if (matrix[i][j] == '0') {
+                matrix[i][j] = '*';
+                lastChecked[(*lastCounter)++] = i;
+                lastChecked[(*lastCounter)++] = j;
+            }
+            i++; j--;
+        }
 
         history[*historyCounter] = x;
         (*historyCounter)++;
@@ -98,6 +130,17 @@ void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,in
     }
     else {
         turn = '1';
+    }
+}
+void historyPrint(int historyCounter,int*history,char player) {
+    for (int i = 0;i < historyCounter;i += 2) {
+        cout << "P" << player << "->" << "(" << history[i] << ',' << history[i] << ")" << endl;
+        if (player == '1') {
+            player = '2';
+        }
+        else {
+            player = '1';
+        }
     }
 }
 int main()
@@ -112,6 +155,8 @@ int main()
     int historyCounter = 0;
     char turn = '1';
     char player = '1';
+    int* lastChecked = nullptr;
+    int lastCounter = 0;
     while (myStrcmp(command, "end") == false) {
         if (myStrcmp(command, "new")) {
             cout << "Enter size of the board: ";
@@ -127,6 +172,7 @@ int main()
                 N = n;
                 M = m;
                 history = new int[N * M * 2];
+                lastChecked = new int[N * M * 2];
                 printMatrix(n, m, matrix);
 
             }
@@ -145,7 +191,7 @@ int main()
                     cout << "The coordinates must be in the interval [0," << N << "] and [0," << M << "]" << endl;
                 }
                 else {
-                    playOnPlace(matrix,N,M,x,y,turn,history,&historyCounter);
+                    playOnPlace(matrix,N,M,x,y,turn,history,&historyCounter,lastChecked,&lastCounter);
                 }
             }
             cout << "Enter new command: ";
@@ -179,17 +225,33 @@ int main()
             cout << "Enter new command: ";
             cin >> command;
         }
-        else if (myStrcmp(command, "back")){}
-        else if (myStrcmp(command, "history")) {     
-            for (int i = 0;i < historyCounter;i+=2) {          
-                cout << "P" << player << "->" << "(" << history[i] << ',' << history[i] << ")" << endl;                       
-                if (player == '1') {
-                    player = '2';
+        else if (myStrcmp(command, "back")) {
+            if (historyCounter < 2) {
+                cout << "No moves to undo." << endl;
+            }
+            else {
+
+
+                for (int i = 0; i < lastCounter; i += 2) {
+                    matrix[lastChecked[i]][lastChecked[i + 1]] = '0';
+                }
+                int y = history[historyCounter - 1];
+                int x = history[historyCounter - 2];
+                matrix[x][y] = '0';
+                historyCounter -= 2;
+                if (turn == '1') {
+                    turn = '2';
                 }
                 else {
-                    player = '1';
+                    turn = '1';
                 }
             }
+                cout << "Enter new command: ";
+                cin >> command;
+            
+        }
+        else if (myStrcmp(command, "history")) {     
+            historyPrint(historyCounter, history, player);
             cout << "Enter new command: ";
             cin >> command;
 
