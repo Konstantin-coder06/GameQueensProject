@@ -58,9 +58,9 @@ void freePlaces(char** matrix, int n, int m) {
     }
     cout << endl;
 }
-void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn) {
+void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,int* historyCounter) {
     if (matrix[x][y] != '0') {
-        cout << "This place is taken";
+        cout << "This place is taken"<<endl;
     }
     else {
         matrix[x][y] = turn;
@@ -88,6 +88,10 @@ void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn) {
         i = x + 1; j = y - 1;
         while (i < N && j >= 0) matrix[i++][j--] = '*';
 
+        history[*historyCounter] = x;
+        (*historyCounter)++;
+        history[*historyCounter] = y;
+        (*historyCounter)++;
     }
     if (turn == '1') {
         turn = '2';
@@ -104,7 +108,10 @@ int main()
     cin >> command;
     int N = 0, M = 0;
     char** matrix = nullptr;
+    int* history = nullptr;
+    int historyCounter = 0;
     char turn = '1';
+    char player = '1';
     while (myStrcmp(command, "end") == false) {
         if (myStrcmp(command, "new")) {
             cout << "Enter size of the board: ";
@@ -119,6 +126,7 @@ int main()
                 matrix = createMatrix(n, m);
                 N = n;
                 M = m;
+                history = new int[N * M * 2];
                 printMatrix(n, m, matrix);
 
             }
@@ -137,7 +145,7 @@ int main()
                     cout << "The coordinates must be in the interval [0," << N << "] and [0," << M << "]" << endl;
                 }
                 else {
-                    playOnPlace(matrix,N,M,x,y,turn);
+                    playOnPlace(matrix,N,M,x,y,turn,history,&historyCounter);
                 }
             }
             cout << "Enter new command: ";
@@ -172,9 +180,19 @@ int main()
             cin >> command;
         }
         else if (myStrcmp(command, "back")){}
-        else if (myStrcmp(command, "history")){
-        
-        
+        else if (myStrcmp(command, "history")) {     
+            for (int i = 0;i < historyCounter;i+=2) {          
+                cout << "P" << player << "->" << "(" << history[i] << ',' << history[i] << ")" << endl;                       
+                if (player == '1') {
+                    player = '2';
+                }
+                else {
+                    player = '1';
+                }
+            }
+            cout << "Enter new command: ";
+            cin >> command;
+
         }
         else if (myStrcmp(command, "exit")) {
             return 0;
