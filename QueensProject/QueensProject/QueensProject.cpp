@@ -48,6 +48,54 @@ bool myStrcmp(const char a[], const char b[]) {
     }
     return a[i] == b[i]; 
 }
+void freePlaces(char** matrix, int n, int m) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (matrix[i][j] == '0') {
+                cout << "(" << i << ", " << j << ") ";
+            }
+        }
+    }
+    cout << endl;
+}
+void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn) {
+    if (matrix[x][y] != '0') {
+        cout << "This place is taken";
+    }
+    else {
+        matrix[x][y] = turn;
+        for (int i = 0;i < N;i++) {
+            if (i != x) {
+                matrix[i][y] = '*';
+            }
+        }
+        for (int i = 0;i < M;i++) {
+            if (i != y) {
+                matrix[x][i] = '*';
+            }
+        }
+        int i, j;
+
+        i = x - 1; j = y - 1;
+        while (i >= 0 && j >= 0) matrix[i--][j--] = '*';
+
+        i = x + 1; j = y + 1;
+        while (i < N && j < M) matrix[i++][j++] = '*';
+
+        i = x - 1; j = y + 1;
+        while (i >= 0 && j < M) matrix[i--][j++] = '*';
+
+        i = x + 1; j = y - 1;
+        while (i < N && j >= 0) matrix[i++][j--] = '*';
+
+    }
+    if (turn == '1') {
+        turn = '2';
+    }
+    else {
+        turn = '1';
+    }
+}
 int main()
 {
     cout << "Welcome to the game \"Queens\"" << endl << endl;
@@ -82,8 +130,6 @@ int main()
                 cout << "No board. Use 'new' first." << endl;
             }
             else {
-
-
                 cout << "Enter place on board(row col): ";
                 int x, y;
                 cin >> x >> y;
@@ -91,42 +137,7 @@ int main()
                     cout << "The coordinates must be in the interval [0," << N << "] and [0," << M << "]" << endl;
                 }
                 else {
-                    if (matrix[x][y] != '0') {
-                        cout << "This place is taken";
-                    }
-                    else {
-                        matrix[x][y] = turn;
-                        for (int i = 0;i < N;i++) {
-                            if (i != x) {
-                                matrix[i][y] = '*';
-                            }
-                        }
-                        for (int i = 0;i < M;i++) {
-                            if (i != y) {
-                                matrix[x][i] = '*';
-                            }
-                        }
-                        int i, j;
-
-                        i = x - 1; j = y - 1;
-                        while (i >= 0 && j >= 0) matrix[i--][j--] = '*';
-
-                        i = x + 1; j = y + 1;
-                        while (i < N && j < M) matrix[i++][j++] = '*';
-
-                        i = x - 1; j = y + 1;
-                        while (i >= 0 && j < M) matrix[i--][j++] = '*';
-
-                        i = x + 1; j = y - 1;
-                        while (i < N && j >= 0) matrix[i++][j--] = '*';
-
-                    }
-                    if (turn == '1') {
-                        turn = '2';
-                    }
-                    if (turn == '2') {
-                        turn = '1';
-                    }
+                    playOnPlace(matrix,N,M,x,y,turn);
                 }
             }
             cout << "Enter new command: ";
@@ -135,7 +146,9 @@ int main()
             
         }
         else if (myStrcmp(command, "free")) {
-
+             freePlaces(matrix, N, M);
+             cout << "Enter new command: ";
+             cin >> command;
         }
         else if (myStrcmp(command, "show")) {
            printMatrix(N, M, matrix);
@@ -149,12 +162,19 @@ int main()
 
         }
         else if (myStrcmp(command, "turn")) {
-
+            cout << "Player: " << turn << " is now" << endl;
+            cout << "Enter new command: ";
+            cin >> command;
         }
         else if (myStrcmp(command, "help")) {
             printHelp();
             cout << "Enter new command: ";
             cin >> command;
+        }
+        else if (myStrcmp(command, "back")){}
+        else if (myStrcmp(command, "history")){
+        
+        
         }
         else if (myStrcmp(command, "exit")) {
             return 0;
