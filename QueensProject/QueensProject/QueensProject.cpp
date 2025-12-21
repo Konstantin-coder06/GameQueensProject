@@ -1,7 +1,9 @@
 ﻿#include <iostream>
+#include <fstream>
 using namespace std;
 int const commandSize=20;
 int const maxSizeOfBoard = 15;
+const char* fileName = "saves.txt";
 char** createMatrix(int n, int m) {
     char** matrix = new char* [n];
     for (int i = 0; i < n; i++) {
@@ -261,7 +263,45 @@ int main()
            cin >> command;
         }
         else if (myStrcmp(command, "save")) {
+            if (matrix == nullptr) {
+                cout << "No game to save!" << endl;
+            }
+            else {
+                cout << "Enter name for the save: ";
+                char nameFile[commandSize];
+                cin >> nameFile;
+                ofstream file(nameFile);
 
+                if (!file) {
+                    cout << "Cannot open file!" << endl;
+                }
+                else {
+                    file << N << " " << M << endl;
+                    file << turn << endl;
+                    file << historyCounter << endl;
+                    for (int i = 0; i < historyCounter; i++) {
+                        file << history[i] << " ";
+                    }
+                    file << endl;
+                    file << lastCounter << endl;
+                    for (int i = 0; i < lastCounter; i++) {
+                        file << lastChecked[i] << " ";
+                    }
+                    file << endl;
+                    for (int i = 0; i < N; i++) {
+                        for (int j = 0; j < M; j++) {
+                            file << matrix[i][j];
+                        }
+                        file << endl;
+                    }
+
+                    file.close();
+                    cout << "Game saved successfully." << endl;
+                }
+            }
+
+            cout << "Enter new command: ";
+            cin >> command;
         }
         else if (myStrcmp(command, "load")) {
 
