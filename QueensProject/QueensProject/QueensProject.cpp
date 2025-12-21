@@ -166,7 +166,11 @@ void backFunction(int &lastCounter,char**matrix,int*lastChecked,int*history,char
         }
     }
 }
-
+void deleteArray(int* arr, int* counter) {
+    delete[]arr;
+    arr = nullptr;
+    *counter = 0;
+}
 int main()
 {
     cout << "Welcome to the game \"Queens\"" << endl << endl;
@@ -270,41 +274,94 @@ int main()
                 cout << "Enter name for the save: ";
                 char nameFile[commandSize];
                 cin >> nameFile;
-                ofstream file(nameFile);
-
-                if (!file) {
-                    cout << "Cannot open file!" << endl;
+                ifstream check(nameFile);
+                if (check) {
+                    cout << "File with this name already exists!" << endl;
+                    check.close();
                 }
                 else {
-                    file << N << " " << M << endl;
-                    file << turn << endl;
-                    file << historyCounter << endl;
-                    for (int i = 0; i < historyCounter; i++) {
-                        file << history[i] << " ";
+
+
+                    ofstream file(nameFile);
+
+                    if (!file) {
+                        cout << "Cannot open file!" << endl;
                     }
-                    file << endl;
-                    file << lastCounter << endl;
-                    for (int i = 0; i < lastCounter; i++) {
-                        file << lastChecked[i] << " ";
-                    }
-                    file << endl;
-                    for (int i = 0; i < N; i++) {
-                        for (int j = 0; j < M; j++) {
-                            file << matrix[i][j];
+
+                    else {
+                        file << N << " " << M << endl;
+                        file << turn << endl;
+                        file << historyCounter << endl;
+                        for (int i = 0; i < historyCounter; i++) {
+                            file << history[i] << " ";
                         }
                         file << endl;
-                    }
+                        file << lastCounter << endl;
+                        for (int i = 0; i < lastCounter; i++) {
+                            file << lastChecked[i] << " ";
+                        }
+                        file << endl;
+                        for (int i = 0; i < N; i++) {
+                            for (int j = 0; j < M; j++) {
+                                file << matrix[i][j];
+                            }
+                            file << endl;
+                        }
 
-                    file.close();
-                    cout << "Game saved successfully." << endl;
+                        file.close();
+                        cout << "Game saved successfully." << endl;
+                    }
                 }
             }
-
             cout << "Enter new command: ";
             cin >> command;
         }
         else if (myStrcmp(command, "load")) {
+            cout << "Enter name of file to be loaded: ";
+            char fileName[commandSize];
+            cin >> fileName;
+            ifstream file(fileName);
+            if (!file) {
+                cout << "File with this name does not exists now: ";
+            }
+            else {
+                if (matrix != nullptr) {
+                    deleteMatrix(N, matrix);
+                }
+                if (history != nullptr) {
+                    deleteArray(history, &historyCounter);
+                }
 
+                if (lastChecked != nullptr) {
+                    deleteArray(lastChecked, &lastCounter);
+                }
+                file >> N >> M;
+                file >> turn;
+                file >> historyCounter;
+                history = new int[historyCounter];
+                for (int i = 0;i < historyCounter;i++) {
+                    file >> history[i];
+                }
+               
+                file >> lastCounter;
+                lastChecked = new int[lastCounter];
+                for (int i = 0; i < lastCounter; i++) {
+                    file >> lastChecked[i];
+                }
+                matrix = createMatrix(N, M);
+                for (int i = 0;i < N;i++) {
+                    for (int j = 0;j < M;j++) {
+                        file >> matrix[i][j];
+                    }
+                }
+                cout << "You load save: " << fileName <<" successfully" << endl;
+                cout << "The board is:"<<endl;
+                printMatrix(N, M, matrix);
+            } 
+            cout << "Enter new command: ";
+            cin >> command;
+            
+            
         }
         else if (myStrcmp(command, "turn")) {
             cout << "Player: " << turn << " is now" << endl;
