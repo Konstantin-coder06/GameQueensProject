@@ -28,15 +28,15 @@ void deleteMatrix(int n, char** matrix) {
 }
 void printHelp() {
     cout << "Commands:" << endl;
-    cout << "new N M       - start new game with size N x M" << endl;
-    cout << "play x y      - place queen at (x, y)" << endl;
-    cout << "free          - show all valid cells" << endl;
-    cout << "show          - visualize board" << endl;
-    cout << "save file.txt - save current state" << endl;
-    cout << "load file.txt - load state from file" << endl;
-    cout << "turn          - show whose turn it is" << endl;
-    cout << "help          - show this menu" << endl;
-    cout << "exit          - exit program" << endl;
+    cout << "new    - start new game with size N x M" << endl;
+    cout << "play   - place queen at (x, y)" << endl;
+    cout << "free   - show all valid cells" << endl;
+    cout << "show   - visualize board" << endl;
+    cout << "save   - save current state" << endl;
+    cout << "load   - load state from file" << endl;
+    cout << "turn   - show whose turn it is" << endl;
+    cout << "help   - show this menu" << endl;
+    cout << "exit   - exit program" << endl;
 }
 bool myStrcmp(const char a[], const char b[]) {
     int i = 0;
@@ -143,9 +143,34 @@ void historyPrint(int historyCounter,int*history,char player) {
         }
     }
 }
+void backFunction(int &lastCounter,char**matrix,int*lastChecked,int*history,char&turn,int&historyCounter) {
+    if (historyCounter < 2) {
+        cout << "No moves to undo." << endl;
+        return;
+    }
+    else {
+        for (int i = 0; i < lastCounter; i += 2) {
+            matrix[lastChecked[i]][lastChecked[i + 1]] = '0';
+        }
+        int y = history[historyCounter - 1];
+        int x = history[historyCounter - 2];
+        matrix[x][y] = '0';
+        historyCounter -= 2;
+        if (turn == '1') {
+            turn = '2';
+        }
+        else {
+            turn = '1';
+        }
+    }
+}
+
 int main()
 {
     cout << "Welcome to the game \"Queens\"" << endl << endl;
+    cout << "These are all commands in the game:" << endl;
+    printHelp();
+    cout << endl;
     cout << "Enter command: ";
     char command[commandSize];
     cin >> command;
@@ -158,24 +183,50 @@ int main()
     int* lastChecked = nullptr;
     int lastCounter = 0;
     while (myStrcmp(command, "end") == false) {
-        if (myStrcmp(command, "new")) {
-            cout << "Enter size of the board: ";
-            int n, m;
-            cin >> n >> m;
-            if ((n<1 || n>maxSizeOfBoard) || (m<1 || m>maxSizeOfBoard)) {
-                cout << "N and M must be in the interval [1,15]" << endl;
-              
+        char ch;
+        bool hasExtra = false;
+        while (cin.get(ch) && ch != '\n') {
+            if (ch != ' ' && ch != '\t') {
+                hasExtra = true;
             }
-            else {
-                cout << "Board " << n << "x" << m << endl;
-                matrix = createMatrix(n, m);
-                N = n;
-                M = m;
-                history = new int[N * M * 2];
-                lastChecked = new int[N * M * 2];
-                printMatrix(n, m, matrix);
+        }
 
+        if (hasExtra) {
+            cout << "Invalid command" << endl;
+            cout << "Enter new command: ";
+            cin >> command;
+            continue;
+        }
+        if (myStrcmp(command, "new")) {
+            int n, m;
+            while (true) {
+                cout << "Enter size of the board: ";
+
+                if (!(cin >> n >> m)) {
+                    cout << "Invalid input. Enter two integers." << endl;
+                    cin.clear();
+                    char ch;
+                    while (cin.get(ch) && ch != '\n');
+                    continue;
+                }
+
+                if (n < 1 || n > maxSizeOfBoard || m < 1 || m > maxSizeOfBoard) {
+                    cout << "N and M must be in the interval [1,15]" << endl;
+                    continue;
+                }
+                else {
+                    cout << "Board " << n << "x" << m << endl;
+                    matrix = createMatrix(n, m);
+                    N = n;
+                    M = m;
+                    history = new int[N * M * 2];
+                    lastChecked = new int[N * M * 2];
+                    printMatrix(n, m, matrix);
+
+                }
+                break;
             }
+          
             cout << "Enter new command: ";
             cin >> command;
         }
@@ -225,29 +276,11 @@ int main()
             cout << "Enter new command: ";
             cin >> command;
         }
-        else if (myStrcmp(command, "back")) {
-            if (historyCounter < 2) {
-                cout << "No moves to undo." << endl;
-            }
-            else {
-
-
-                for (int i = 0; i < lastCounter; i += 2) {
-                    matrix[lastChecked[i]][lastChecked[i + 1]] = '0';
-                }
-                int y = history[historyCounter - 1];
-                int x = history[historyCounter - 2];
-                matrix[x][y] = '0';
-                historyCounter -= 2;
-                if (turn == '1') {
-                    turn = '2';
-                }
-                else {
-                    turn = '1';
-                }
-            }
-                cout << "Enter new command: ";
-                cin >> command;
+        else if (myStrcmp(command, "back")) {   
+            backFunction(lastCounter, matrix, lastChecked, history, turn, historyCounter);
+            
+            cout << "Enter new command: ";
+            cin >> command;
             
         }
         else if (myStrcmp(command, "history")) {     
