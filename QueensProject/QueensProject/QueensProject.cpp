@@ -1,9 +1,20 @@
 ﻿#include <iostream>
 #include <fstream>
+/**
+*
+* Solution to course project #06
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2025/2026
+*
+* @author Konstantin Ivanov Mitkov
+* @idnumber 0MI0600614
+* @compiler VISUAL STUDIO
+*/
+
 using namespace std;
-int const commandSize=20;
-int const maxSizeOfBoard = 15;
-const char* fileName = "saves.txt";
+int const COMMAND_SIZE=20;
+int const MAX_SIZE_OF_BOARD = 15;
 char** createMatrix(int n, int m) {
     char** matrix = new char* [n];
     for (int i = 0; i < n; i++) {
@@ -15,6 +26,10 @@ char** createMatrix(int n, int m) {
     return matrix;
 }
 void printMatrix(int n, int m, char** matrix) {
+    if (!matrix) {
+        cout << "No board!" << endl;
+        return;
+    }
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             cout << matrix[i][j] << " ";
@@ -22,23 +37,27 @@ void printMatrix(int n, int m, char** matrix) {
         cout << endl;
     }
 }
-void deleteMatrix(int n, char** matrix) {
+void deleteMatrix(int n, char**& matrix) {
+    if (!matrix) return;
     for (int i = 0; i < n; i++) {
         delete[] matrix[i];
     }
     delete[] matrix;
+    matrix = nullptr;
 }
 void printHelp() {
     cout << "Commands:" << endl;
-    cout << "new    - start new game with size N x M" << endl;
-    cout << "play   - place queen at (x, y)" << endl;
-    cout << "free   - show all valid cells" << endl;
-    cout << "show   - visualize board" << endl;
-    cout << "save   - save current state" << endl;
-    cout << "load   - load state from file" << endl;
-    cout << "turn   - show whose turn it is" << endl;
-    cout << "help   - show this menu" << endl;
-    cout << "exit   - exit program" << endl;
+    cout << "new     - start new game with size N x M" << endl;
+    cout << "play    - place queen at (x, y)" << endl;
+    cout << "free    - show all valid cells" << endl;
+    cout << "show    - visualize board" << endl;
+    cout << "save    - save current state" << endl;
+    cout << "load    - load state from file" << endl;
+    cout << "turn    - show whose turn it is" << endl;
+    cout << "help    - show this menu" << endl;
+    cout << "history - show the history of the game" << endl;
+    cout << "back    - return the game one play back" << endl;
+    cout << "exit    - exit program" << endl;
 }
 bool myStrcmp(const char a[], const char b[]) {
     int i = 0;
@@ -51,6 +70,10 @@ bool myStrcmp(const char a[], const char b[]) {
     return a[i] == b[i]; 
 }
 void freePlaces(char** matrix, int n, int m) {
+    if (!matrix) {
+        cout << "No board" << endl;
+        return;
+    }
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             if (matrix[i][j] == '0') {
@@ -63,6 +86,7 @@ void freePlaces(char** matrix, int n, int m) {
 void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,int* historyCounter,int*lastChecked,int *lastCounter) {
     if (matrix[x][y] != '0') {
         cout << "This place is taken"<<endl;
+        return;
     }
     else {
         *lastCounter = 0;
@@ -112,7 +136,6 @@ void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,in
             i--; j++;
         }
         i = x + 1; j = y - 1;
-        i = x + 1; j = y - 1;
         while (i < N && j >= 0) {
             if (matrix[i][j] == '0') {
                 matrix[i][j] = '*';
@@ -134,23 +157,31 @@ void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,in
         turn = '1';
     }
 }
-void historyPrint(int historyCounter,int*history,char player) {
-    for (int i = 0;i < historyCounter;i += 2) {
-        cout << "P" << player << "->" << "(" << history[i] << ',' << history[i] << ")" << endl;
-        if (player == '1') {
-            player = '2';
-        }
-        else {
-            player = '1';
+void historyPrint(int historyCounter, int* history) {
+    char player = '1';
+    if (historyCounter == 0) {
+        cout << "There is no history to be shown." << endl;
+
+    }
+    else {
+        for (int i = 0;i < historyCounter;i += 2) {
+            cout << "P" << player << "->" << "(" << history[i] + 1 << ',' << history[i + 1] + 1 << ")" << endl;
+            if (player == '1') {
+                player = '2';
+            }
+            else {
+                player = '1';
+            }
         }
     }
 }
 void backFunction(int &lastCounter,char**matrix,int*lastChecked,int*history,char&turn,int&historyCounter) {
-    if (historyCounter < 2) {
-        cout << "No moves to undo." << endl;
+    if (historyCounter < 2||lastCounter == 0) {
+        cout << "No moves to undo or you just backed." << endl;
         return;
     }
     else {
+      
         for (int i = 0; i < lastCounter; i += 2) {
             matrix[lastChecked[i]][lastChecked[i + 1]] = '0';
         }
@@ -158,6 +189,7 @@ void backFunction(int &lastCounter,char**matrix,int*lastChecked,int*history,char
         int x = history[historyCounter - 2];
         matrix[x][y] = '0';
         historyCounter -= 2;
+        lastCounter = 0;
         if (turn == '1') {
             turn = '2';
         }
@@ -166,10 +198,84 @@ void backFunction(int &lastCounter,char**matrix,int*lastChecked,int*history,char
         }
     }
 }
-void deleteArray(int* arr, int* counter) {
+void deleteArray(int*& arr, int& counter) {
     delete[]arr;
     arr = nullptr;
-    *counter = 0;
+    counter = 0;
+}
+void saveGame(char nameFile[], int N,int M, char& turn, int& historyCounter,int &lastCounter,char**matrix,int*history,int*lastChecked) {
+    ofstream file(nameFile);
+
+    if (!file) {
+        cout << "Cannot open file!" << endl;
+    }
+
+    else {
+        file << N << " " << M << endl;
+        file << turn << endl;
+        file << historyCounter << endl;
+        for (int i = 0; i < historyCounter; i++) {
+            file << history[i] << " ";
+        }
+        file << endl;
+        file << lastCounter << endl;
+        for (int i = 0; i < lastCounter; i++) {
+            file << lastChecked[i] << " ";
+        }
+        file << endl;
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                file << matrix[i][j];
+            }
+            file << endl;
+        }
+
+        file.close();
+        cout << "Game saved successfully." << endl;
+    }
+}
+void loadGame(char**& matrix, int& N, int& M, int*& history, int& historyCounter, int*& lastChecked, int& lastCounter, char& turn){
+    cout << "Enter name of file to be loaded: ";
+    char fileName[COMMAND_SIZE];
+    cin >> fileName;
+    ifstream file(fileName);
+    if (!file) {
+        cout << "File with this name does not exists now: "<<fileName;
+    }
+    else {
+        if (matrix != nullptr) {
+            deleteMatrix(N, matrix);
+        }
+        if (history != nullptr) {
+            deleteArray(history, historyCounter);
+        }
+
+        if (lastChecked != nullptr) {
+            deleteArray(lastChecked, lastCounter);
+        }
+        file >> N >> M;
+        file >> turn;
+        file >> historyCounter;
+        history = new int[MAX_SIZE_OF_BOARD * MAX_SIZE_OF_BOARD * 2];
+        for (int i = 0;i < historyCounter;i++) {
+            file >> history[i];
+        }
+
+        file >> lastCounter;
+        lastChecked = new int[MAX_SIZE_OF_BOARD * MAX_SIZE_OF_BOARD * 2];
+        for (int i = 0; i < lastCounter; i++) {
+            file >> lastChecked[i];
+        }
+        matrix = createMatrix(N, M);
+        for (int i = 0;i < N;i++) {
+            for (int j = 0;j < M;j++) {
+                file >> matrix[i][j];
+            }
+        }
+        cout << "You load save: " << fileName << " successfully" << endl;
+        cout << "The board is:" << endl;
+        printMatrix(N, M, matrix);
+    }
 }
 int main()
 {
@@ -178,17 +284,16 @@ int main()
     printHelp();
     cout << endl;
     cout << "Enter command: ";
-    char command[commandSize];
+    char command[COMMAND_SIZE];
     cin >> command;
     int N = 0, M = 0;
     char** matrix = nullptr;
     int* history = nullptr;
     int historyCounter = 0;
     char turn = '1';
-    char player = '1';
     int* lastChecked = nullptr;
     int lastCounter = 0;
-    while (myStrcmp(command, "end") == false) {
+    while (true) {
         char ch;
         bool hasExtra = false;
         while (cin.get(ch) && ch != '\n') {
@@ -216,17 +321,23 @@ int main()
                     continue;
                 }
 
-                if (n < 1 || n > maxSizeOfBoard || m < 1 || m > maxSizeOfBoard) {
+                if (n < 1 || n > MAX_SIZE_OF_BOARD || m < 1 || m > MAX_SIZE_OF_BOARD) {
                     cout << "N and M must be in the interval [1,15]" << endl;
                     continue;
                 }
                 else {
                     cout << "Board " << n << "x" << m << endl;
+                    if (matrix) deleteMatrix(N, matrix);
+                    if (history) delete[] history;
+                    if (lastChecked) delete[] lastChecked;
                     matrix = createMatrix(n, m);
                     N = n;
                     M = m;
                     history = new int[N * M * 2];
                     lastChecked = new int[N * M * 2];
+                    historyCounter = 0;  
+                    lastCounter = 0;     
+                    turn = '1';
                     printMatrix(n, m, matrix);
 
                 }
@@ -242,10 +353,13 @@ int main()
             }
             else {
                 cout << "Enter place on board(row col): ";
-                int x, y;
-                cin >> x >> y;
+                int inputX, inputY;
+                cin >> inputX >> inputY;
+                int x = inputX - 1;
+                int y = inputY - 1;
+                
                 if ((x < 0 || x >= N) || (y < 0 || y >= M)) {
-                    cout << "The coordinates must be in the interval [0," << N << "] and [0," << M << "]" << endl;
+                    cout << "The coordinates must be in the interval [1," << N << "] and [1," << M << "]" << endl;
                 }
                 else {
                     playOnPlace(matrix,N,M,x,y,turn,history,&historyCounter,lastChecked,&lastCounter);
@@ -272,7 +386,7 @@ int main()
             }
             else {
                 cout << "Enter name for the save: ";
-                char nameFile[commandSize];
+                char nameFile[COMMAND_SIZE];
                 cin >> nameFile;
                 ifstream check(nameFile);
                 if (check) {
@@ -280,91 +394,25 @@ int main()
                     check.close();
                 }
                 else {
-
-
-                    ofstream file(nameFile);
-
-                    if (!file) {
-                        cout << "Cannot open file!" << endl;
-                    }
-
-                    else {
-                        file << N << " " << M << endl;
-                        file << turn << endl;
-                        file << historyCounter << endl;
-                        for (int i = 0; i < historyCounter; i++) {
-                            file << history[i] << " ";
-                        }
-                        file << endl;
-                        file << lastCounter << endl;
-                        for (int i = 0; i < lastCounter; i++) {
-                            file << lastChecked[i] << " ";
-                        }
-                        file << endl;
-                        for (int i = 0; i < N; i++) {
-                            for (int j = 0; j < M; j++) {
-                                file << matrix[i][j];
-                            }
-                            file << endl;
-                        }
-
-                        file.close();
-                        cout << "Game saved successfully." << endl;
-                    }
+                    saveGame(nameFile, N, M, turn, historyCounter, lastCounter, matrix, history, lastChecked);                   
                 }
-            }
+            }        
             cout << "Enter new command: ";
             cin >> command;
         }
         else if (myStrcmp(command, "load")) {
-            cout << "Enter name of file to be loaded: ";
-            char fileName[commandSize];
-            cin >> fileName;
-            ifstream file(fileName);
-            if (!file) {
-                cout << "File with this name does not exists now: ";
-            }
-            else {
-                if (matrix != nullptr) {
-                    deleteMatrix(N, matrix);
-                }
-                if (history != nullptr) {
-                    deleteArray(history, &historyCounter);
-                }
-
-                if (lastChecked != nullptr) {
-                    deleteArray(lastChecked, &lastCounter);
-                }
-                file >> N >> M;
-                file >> turn;
-                file >> historyCounter;
-                history = new int[historyCounter];
-                for (int i = 0;i < historyCounter;i++) {
-                    file >> history[i];
-                }
-               
-                file >> lastCounter;
-                lastChecked = new int[lastCounter];
-                for (int i = 0; i < lastCounter; i++) {
-                    file >> lastChecked[i];
-                }
-                matrix = createMatrix(N, M);
-                for (int i = 0;i < N;i++) {
-                    for (int j = 0;j < M;j++) {
-                        file >> matrix[i][j];
-                    }
-                }
-                cout << "You load save: " << fileName <<" successfully" << endl;
-                cout << "The board is:"<<endl;
-                printMatrix(N, M, matrix);
-            } 
+            loadGame(matrix,N,M,history,historyCounter,lastChecked,lastCounter,turn);
             cout << "Enter new command: ";
             cin >> command;
             
-            
         }
         else if (myStrcmp(command, "turn")) {
-            cout << "Player: " << turn << " is now" << endl;
+            if (matrix == nullptr) {
+                cout << "There is no board."<<endl;
+            }
+            else {
+                cout << "Player: " << turn << " is now" << endl;
+            }
             cout << "Enter new command: ";
             cin >> command;
         }
@@ -381,12 +429,15 @@ int main()
             
         }
         else if (myStrcmp(command, "history")) {     
-            historyPrint(historyCounter, history, player);
+            historyPrint(historyCounter, history);
             cout << "Enter new command: ";
             cin >> command;
 
         }
         else if (myStrcmp(command, "exit")) {
+            if (matrix) deleteMatrix(N, matrix);
+            if (history) delete[] history;
+            if (lastChecked) delete[] lastChecked;
             return 0;
         }
         else {
