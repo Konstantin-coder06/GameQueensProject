@@ -15,6 +15,7 @@
 using namespace std;
 int const COMMAND_SIZE=20;
 int const MAX_SIZE_OF_BOARD = 15;
+
 char** createMatrix(int n, int m) {
     char** matrix = new char* [n];
     for (int i = 0; i < n; i++) {
@@ -38,7 +39,9 @@ void printMatrix(int n, int m, char** matrix) {
     }
 }
 void deleteMatrix(int n, char**& matrix) {
-    if (!matrix) return;
+    if (!matrix) {
+        return;
+    }
     for (int i = 0; i < n; i++) {
         delete[] matrix[i];
     }
@@ -83,85 +86,105 @@ void freePlaces(char** matrix, int n, int m) {
     }
     cout << endl;
 }
+void markColumn(int N,int x, int y, char**matrix, int*lastChecked, int*lastCounter) {
+    for (int i = 0;i < N;i++) {
+        if (i != x && matrix[i][y] == '0') {
+            matrix[i][y] = '*';
+            lastChecked[(*lastCounter)++] = i;
+            lastChecked[(*lastCounter)++] = y;
+        }
+    }
+}
+void markRow(int M, int x, int y, char** matrix, int* lastChecked, int* lastCounter) {
+    for (int i = 0;i < M;i++) {
+        if (i != y && matrix[x][i] == '0') {
+            matrix[x][i] = '*';
+            lastChecked[(*lastCounter)++] = x;
+            lastChecked[(*lastCounter)++] = i;
+        }
+    }
+}
+void markMainDiagUp(int i, int j,int x,int y, char** matrix, int* lastChecked, int* lastCounter) {
+    i = x - 1; j = y - 1;
+    while (i >= 0 && j >= 0) {
+        if (matrix[i][j] == '0') {
+            matrix[i][j] = '*';
+            lastChecked[(*lastCounter)++] = i;
+            lastChecked[(*lastCounter)++] = j;
+        }
+        i--; j--;
+    }
+}
+void markMainDiagDown(int M,int N, int i, int j, int x, int y, char** matrix, int* lastChecked, int* lastCounter) {
+    i = x + 1; j = y + 1;
+    while (i < N && j < M) {
+        if (matrix[i][j] == '0') {
+            matrix[i][j] = '*';
+            lastChecked[(*lastCounter)++] = i;
+            lastChecked[(*lastCounter)++] = j;
+        }
+        i++; j++;
+    }
+}
+void markSecondDiagUp(int M, int i, int j, int x, int y, char** matrix, int* lastChecked, int* lastCounter) {
+    i = x - 1; j = y + 1;
+    while (i >= 0 && j < M) {
+        if (matrix[i][j] == '0') {
+            matrix[i][j] = '*';
+            lastChecked[(*lastCounter)++] = i;
+            lastChecked[(*lastCounter)++] = j;
+        }
+        i--; j++;
+    }
+}
+void markSecondDiagDown(int N, int i, int j, int x, int y, char** matrix, int* lastChecked, int* lastCounter) {
+    i = x + 1; j = y - 1;
+    while (i < N && j >= 0) {
+        if (matrix[i][j] == '0') {
+            matrix[i][j] = '*';
+            lastChecked[(*lastCounter)++] = i;
+            lastChecked[(*lastCounter)++] = j;
+        }
+        i++; j--;
+    }
+}
 void playOnPlace(char**matrix,int N,int M, int x,int y,char&turn, int*history,int* historyCounter,int*lastChecked,int *lastCounter) {
-    if (matrix[x][y] != '0') {
-        cout << "This place is taken"<<endl;
-        return;
+    if ((x < 0 || x >= N) || (y < 0 || y >= M)) {
+        cout << "The coordinates must be in the interval [1," << N << "] and [1," << M << "]" << endl;
     }
     else {
-        *lastCounter = 0;
-        matrix[x][y] = turn;
-        for (int i = 0;i < N;i++) {
-            if (i != x && matrix[i][y] == '0') {
-                matrix[i][y] = '*';
-                lastChecked[(*lastCounter)++] = i;
-                lastChecked[(*lastCounter)++] = y;
-            }
+        if (matrix[x][y] != '0') {
+            cout << "This place is taken" << endl;
+            return;
         }
-        for (int i = 0;i < M;i++) {
-            if (i != y && matrix[x][i] == '0') {
-                matrix[x][i] = '*';
-                lastChecked[(*lastCounter)++] = x;
-                lastChecked[(*lastCounter)++] = i;
-            }
+        else {
+            *lastCounter = 0;
+            matrix[x][y] = turn;       
+            int i = 0;
+            int j = 0;
+            markColumn(N, x, y, matrix, lastChecked, lastCounter);
+            markRow(M, x, y, matrix, lastChecked, lastCounter);
+            markMainDiagUp(i, j, x, y, matrix, lastChecked, lastCounter);
+            markMainDiagDown(M, N, i, j, x, y, matrix, lastChecked, lastCounter);
+            markSecondDiagUp(M, i, j, x, y, matrix, lastChecked, lastCounter);
+            markSecondDiagDown(N, i, j, x, y, matrix, lastChecked, lastCounter);
+            history[*historyCounter] = x;
+            (*historyCounter)++;
+            history[*historyCounter] = y;
+            (*historyCounter)++;
         }
-        int i, j;
-        i = x - 1; j = y - 1;
-        while (i >= 0 && j >= 0) {
-            if (matrix[i][j] == '0') {
-                matrix[i][j] = '*';
-                lastChecked[(*lastCounter)++] = i;
-                lastChecked[(*lastCounter)++] = j;
-            }
-            i--; j--;
+        if (turn == '1') {
+            turn = '2';
         }
-
-        i = x + 1; j = y + 1;
-        while (i < N && j < M) {
-            if (matrix[i][j] == '0') {
-                matrix[i][j] = '*';
-                lastChecked[(*lastCounter)++] = i;
-                lastChecked[(*lastCounter)++] = j;
-            }
-            i++; j++;
+        else {
+            turn = '1';
         }
-
-        i = x - 1; j = y + 1;
-        while (i >= 0 && j < M) {
-            if (matrix[i][j] == '0') {
-                matrix[i][j] = '*';
-                lastChecked[(*lastCounter)++] = i;
-                lastChecked[(*lastCounter)++] = j;
-            }
-            i--; j++;
-        }
-        i = x + 1; j = y - 1;
-        while (i < N && j >= 0) {
-            if (matrix[i][j] == '0') {
-                matrix[i][j] = '*';
-                lastChecked[(*lastCounter)++] = i;
-                lastChecked[(*lastCounter)++] = j;
-            }
-            i++; j--;
-        }
-
-        history[*historyCounter] = x;
-        (*historyCounter)++;
-        history[*historyCounter] = y;
-        (*historyCounter)++;
-    }
-    if (turn == '1') {
-        turn = '2';
-    }
-    else {
-        turn = '1';
     }
 }
 void historyPrint(int historyCounter, int* history) {
     char player = '1';
     if (historyCounter == 0) {
         cout << "There is no history to be shown." << endl;
-
     }
     else {
         for (int i = 0;i < historyCounter;i += 2) {
@@ -180,8 +203,7 @@ void backFunction(int &lastCounter,char**matrix,int*lastChecked,int*history,char
         cout << "No moves to undo or you just backed." << endl;
         return;
     }
-    else {
-      
+    else {  
         for (int i = 0; i < lastCounter; i += 2) {
             matrix[lastChecked[i]][lastChecked[i + 1]] = '0';
         }
@@ -205,11 +227,9 @@ void deleteArray(int*& arr, int& counter) {
 }
 void saveGame(char nameFile[], int N,int M, char& turn, int& historyCounter,int &lastCounter,char**matrix,int*history,int*lastChecked) {
     ofstream file(nameFile);
-
     if (!file) {
         cout << "Cannot open file!" << endl;
     }
-
     else {
         file << N << " " << M << endl;
         file << turn << endl;
@@ -286,7 +306,8 @@ int main()
     cout << "Enter command: ";
     char command[COMMAND_SIZE];
     cin >> command;
-    int N = 0, M = 0;
+    int N = 0;
+    int M = 0;
     char** matrix = nullptr;
     int* history = nullptr;
     int historyCounter = 0;
@@ -309,7 +330,8 @@ int main()
             continue;
         }
         if (myStrcmp(command, "new")) {
-            int n, m;
+            int n;
+            int m;
             while (true) {
                 cout << "Enter size of the board: ";
 
@@ -327,9 +349,15 @@ int main()
                 }
                 else {
                     cout << "Board " << n << "x" << m << endl;
-                    if (matrix) deleteMatrix(N, matrix);
-                    if (history) delete[] history;
-                    if (lastChecked) delete[] lastChecked;
+                    if (matrix) {
+                        deleteMatrix(N, matrix);
+                    }
+                    if (history) { 
+                        delete[] history;
+                    }
+                    if (lastChecked) { 
+                        delete[] lastChecked;
+                    }
                     matrix = createMatrix(n, m);
                     N = n;
                     M = m;
@@ -356,19 +384,11 @@ int main()
                 int inputX, inputY;
                 cin >> inputX >> inputY;
                 int x = inputX - 1;
-                int y = inputY - 1;
-                
-                if ((x < 0 || x >= N) || (y < 0 || y >= M)) {
-                    cout << "The coordinates must be in the interval [1," << N << "] and [1," << M << "]" << endl;
-                }
-                else {
-                    playOnPlace(matrix,N,M,x,y,turn,history,&historyCounter,lastChecked,&lastCounter);
-                }
+                int y = inputY - 1;             
+                playOnPlace(matrix,N,M,x,y,turn,history,&historyCounter,lastChecked,&lastCounter);              
             }
             cout << "Enter new command: ";
-            cin >> command;
-            
-            
+            cin >> command;            
         }
         else if (myStrcmp(command, "free")) {
              freePlaces(matrix, N, M);
@@ -435,9 +455,14 @@ int main()
 
         }
         else if (myStrcmp(command, "exit")) {
-            if (matrix) deleteMatrix(N, matrix);
-            if (history) delete[] history;
-            if (lastChecked) delete[] lastChecked;
+            if (matrix) {
+                deleteMatrix(N, matrix);
+            }
+            if (history) {
+                delete[] history;
+            }
+            if (lastChecked) { delete[] lastChecked; }
+
             return 0;
         }
         else {
@@ -445,10 +470,6 @@ int main()
             cout << "Enter new command: ";
             cin >> command;
         }
-
-
-
-
     }
     return 0;
 }
